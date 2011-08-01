@@ -2,15 +2,7 @@
 
 # If no file name is passed, fail and exit.
 if ARGV.length < 1
-  puts "Error: You must pass a file name as the first parameter."
-  Process.exit
-end
-
-# Get the file name from the command line args.
-file_name = ARGV[0]
-
-unless File.exists? file_name
-  puts "Error: File #{file_name} does not exist."
+  puts "Error: You must pass a parameter."
   Process.exit
 end
 
@@ -19,14 +11,14 @@ end
 #======================================================================#
 
 # Generates a tab.
-def tab
-  "&nbsp;" * 4
+def tab width = 4
+  "&nbsp;" * width
 end
 
 # Converts a title into a slug by downcasing it and converting spaces
 # to hyphens.
 def slugify string
-  string.downcase.gsub(' ', '-')
+  strip_tags(string).downcase.gsub(' ', '-')
 end
 
 # Takes the match array, which is of format ["2", "Heading"] where
@@ -34,8 +26,7 @@ end
 # between the <h> tags, and constructs it into the new, anchored
 # heading.
 def new_heading match
-  match[1] = strip_tags match[1]
-  "<h#{match[0]} id=\"#{slugify(match[1])}\">#{match[1]}</h#{match[0]}>"
+  "<h#{match[:level]} id=\"#{match[:slug]}\">#{match[:title]}</h#{match[:level]}>"
 end
 
 # Strips all HTML tags from a string. Snippet courtesy of:
@@ -46,57 +37,79 @@ end
 
 # Reconstructs the original heading from the match.
 def old_heading match
-  "<h#{match[0]}>#{match[1]}</h#{match[0]}>"
+  if match[:had_slug?]
+    "<h#{match[:level]} id=\"#{match[:slug]}\">#{match[:title]}</h#{match[:level]}>"
+  else
+    "<h#{match[:level]}>#{match[:title]}</h#{match[:level]}>"
+  end
 end
 
 # Creates an anchor for the title match. This anchor goes in the
 # table of contents and will link to the title of the match you
 # supply as an argument.
 def anchor match
-  "<a href=\"\##{slugify(match[1])}\">#{match[1]}</a>"
+  "<a href=\"\##{match[:slug]}\">#{strip_tags match[:title]}</a>"
 end
 
 # Generates a table of contents based on an array of matches. Format
 # is explained in docstring for new_heading.
 def generate_toc matches
-  matches.inject('') do |memo, match|
-    memo += "#{tab * (match[0].to_i - 1)}#{anchor(match)}<br />\n"
-  end
+  matches.inject("<toc>\n") do |memo, match|
+    memo += "#{tab * (match[:level].to_i - 1)}#{anchor(match)}<br />\n"
+  end + '</toc>'
 end
 
-# Scans some HTML and returns an array of matches like so:
+# Scans some HTML and returns an array of hashes that represent heading
+# matches. A heading match looks like this:
 #
-# ["1", "An h1 title"]
-# ["1", "Another title!"]
+# HTML:
+# <h1>Hello, world!</h1>
 #
-# Where the "1" is the h level (e.g. <h1>) and the second
-# element is what was inside the <h> tag.
+# Hash:
+#
+# {
+#   :title     => 'Hello, world!',
+#   :level     => '1',
+#   :slug      => 'hello,-world!',
+#   :had_slug? => false
+# }
 def get_headings html
-  html.scan(/<h([1-6])>(.+?)<\/h\1>/)
+  matches = html.scan(/<h([1-6])(?:\s+.*id=(?:"|')(.+)(?:"|'))?>(.+?)<\/h\1>/)
+  matches.map do |match|
+    {
+      :level => match[0],
+      :slug => match[1] || slugify(match[2]),
+      :title => match[2],
+      :had_slug? => (not match[1].nil?)
+    }
+  end
 end
 
 # Reads in a file_name and outputs that file's contents.
 def read_file file_name
   File.open(file_name) { |file| file.readlines.join }
+rescue
+  nil
 end
 
 ####################################################################
 # SCRIPT STARTS HERE                                               #
 #==================================================================#
 
-# Read in file from ARGV[1]
-file_contents = read_file file_name
+# Read in file from ARGV[0], or if an error is thrown use the passed parameter
+# as input.
+input = read_file(ARGV[0]) || ARGV[0]
 
 # Get the headings for the file.
-headings = get_headings(file_contents)
+headings = get_headings(input)
 
 # Loop over the headings, replacing them with the new anchored headings
 headings.each do |match|
-  file_contents.sub!(old_heading(match), new_heading(match))
+  input = input.sub(old_heading(match), new_heading(match))
 end
 
 # Generate a table of contents and replace the <toc> tag with it.
-file_contents.sub!('<toc>', generate_toc(headings))
+input = input.sub(/<toc\s*(:?\/)?>(?:.+<\/toc>)?/m, generate_toc(headings))
 
 # Output the contents.
-puts file_contents
+print input
