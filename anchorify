@@ -1,0 +1,102 @@
+#!/usr/bin/env ruby
+
+# If no file name is passed, fail and exit.
+if ARGV.length < 1
+  puts "Error: You must pass a file name as the first parameter."
+  Process.exit
+end
+
+# Get the file name from the command line args.
+file_name = ARGV[0]
+
+unless File.exists? file_name
+  puts "Error: File #{file_name} does not exist."
+  Process.exit
+end
+
+########################################################################
+# FUNCTION DEFINITIONS                                                 #
+#======================================================================#
+
+# Generates a tab.
+def tab
+  "&nbsp;" * 4
+end
+
+# Converts a title into a slug by downcasing it and converting spaces
+# to hyphens.
+def slugify string
+  string.downcase.gsub(' ', '-')
+end
+
+# Takes the match array, which is of format ["2", "Heading"] where
+# the "2" is the h level (e.g. <h2>) and "Heading" is the content
+# between the <h> tags, and constructs it into the new, anchored
+# heading.
+def new_heading match
+  match[1] = strip_tags match[1]
+  "<h#{match[0]} id=\"#{slugify(match[1])}\">#{match[1]}</h#{match[0]}>"
+end
+
+# Strips all HTML tags from a string. Snippet courtesy of:
+# http://codesnippets.joyent.com/posts/show/615
+def strip_tags string
+  string.gsub(/<\/?[^>]*>/, "")
+end
+
+# Reconstructs the original heading from the match.
+def old_heading match
+  "<h#{match[0]}>#{match[1]}</h#{match[0]}>"
+end
+
+# Creates an anchor for the title match. This anchor goes in the
+# table of contents and will link to the title of the match you
+# supply as an argument.
+def anchor match
+  "<a href=\"\##{slugify(match[1])}\">#{match[1]}</a>"
+end
+
+# Generates a table of contents based on an array of matches. Format
+# is explained in docstring for new_heading.
+def generate_toc matches
+  matches.inject('') do |memo, match|
+    memo += "#{tab * (match[0].to_i - 1)}#{anchor(match)}<br />\n"
+  end
+end
+
+# Scans some HTML and returns an array of matches like so:
+#
+# ["1", "An h1 title"]
+# ["1", "Another title!"]
+#
+# Where the "1" is the h level (e.g. <h1>) and the second
+# element is what was inside the <h> tag.
+def get_headings html
+  html.scan(/<h([1-6])>(.+?)<\/h\1>/)
+end
+
+# Reads in a file_name and outputs that file's contents.
+def read_file file_name
+  File.open(file_name) { |file| file.readlines.join }
+end
+
+####################################################################
+# SCRIPT STARTS HERE                                               #
+#==================================================================#
+
+# Read in file from ARGV[1]
+file_contents = read_file file_name
+
+# Get the headings for the file.
+headings = get_headings(file_contents)
+
+# Loop over the headings, replacing them with the new anchored headings
+headings.each do |match|
+  file_contents.sub!(old_heading(match), new_heading(match))
+end
+
+# Generate a table of contents and replace the <toc> tag with it.
+file_contents.sub!('<toc>', generate_toc(headings))
+
+# Output the contents.
+puts file_contents
