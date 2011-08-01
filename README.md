@@ -37,6 +37,24 @@ Would generate a table of contents that looks like this:
           Chunky Bacon
 ```
 
+# Installing
+
+First of all, you need to make sure that you have Ruby and git installed
+on your machine. To do this in Ubuntu, execute the following command:
+
+```
+  sudo apt-get install ruby git
+```
+
+Then, nagivate to a directory you want to download the script to and
+clone the git repo and make the script executable:
+
+```
+  git clone git://github.com/samwho/anchorify.git
+  cd anchorify
+  chmod +x anchorify
+```
+
 # Usage
 
 Using the script is easy. The only prerequisite is having ruby installed
