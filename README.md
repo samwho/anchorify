@@ -30,7 +30,7 @@ in the table of contents. For example:
 
 Would generate a table of contents that looks like this:
 
-```html
+```
   Foo
       Bar
       Baz
@@ -42,12 +42,16 @@ Would generate a table of contents that looks like this:
 Using the script is easy. The only prerequisite is having ruby installed
 on your system, then you just execute:
 
+```
   anchorify example.html
+```
 
 Where example.html is an HTML document. The output is printed to the
 screen so if you want to save to another file you would do the following:
 
+```
   anchorify example.html >> anchorified.html
+```
 
 # Adding a table of contents
 
