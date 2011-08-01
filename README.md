@@ -5,29 +5,37 @@ document to produce anchored headings and an optional table of contents.
 
 The script parses the input HTML document and searches for <hn> tags ("n" being a number from 1 to 6). It replaces these tags with an "anchored" version, like so:
 
+```html
   <h1>Hello, everybody!<h1> # This gets changed to the following line
   <h1 id="hello,-everybody!">Hello, everybody!</h1>
+```
 
 And the table of contents that goes with that would look like this:
 
+```html
   <a href="#hello,-everybody!">Hello, everybody!</a>
+```
 
 # Nested headings
 
 For each new header level (<h1>, <h2> etc.), a new indented level is used
 in the table of contents. For example:
 
+```html
   <h1>Foo</h1>
   <h2>Bar</h2>
   <h2>Baz</h2>
   <h3>Chunky Bacon</h3>
+```
 
 Would generate a table of contents that looks like this:
 
+```html
   Foo
       Bar
       Baz
           Chunky Bacon
+```
 
 # Usage
 
