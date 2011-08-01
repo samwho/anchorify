@@ -3,7 +3,7 @@
 Anchorify is a simple script written in Ruby that parses an HTML
 document to produce anchored headings and an optional table of contents.
 
-The script parses the input HTML document and searches for <hn> tags ("n" being a number from 1 to 6). It replaces these tags with an "anchored" version, like so:
+The script parses the input HTML document and searches for `<hn>` tags ("n" being a number from 1 to 6). It replaces these tags with an "anchored" version, like so:
 
 ```html
   <h1>Hello, everybody!<h1> # This gets changed to the following line
@@ -18,7 +18,7 @@ And the table of contents that goes with that would look like this:
 
 # Nested headings
 
-For each new header level (<h1>, <h2> etc.), a new indented level is used
+For each new header level (`<h1>`, `<h2>` etc.), a new indented level is used
 in the table of contents. For example:
 
 ```html
@@ -52,5 +52,5 @@ screen so if you want to save to another file you would do the following:
 # Adding a table of contents
 
 Adding a table of contents to your document is easy, simply put the pseudo
-tag <toc> somewhere in your HTML document and the script will replace that
+tag `<toc>` somewhere in your HTML document and the script will replace that
 with the table of contents in the resulting HTML.
